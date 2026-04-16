@@ -38,6 +38,17 @@ services:
     ports:
       - "6379:6379"
 
+  app-api:
+    build:
+      context: ./services/app-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-thunder}:${POSTGRES_PASSWORD:-thunder_secret}@app-db:5432/${POSTGRES_DB:-thunder_app}
+    depends_on:
+      app-db:
+        condition: service_healthy
+
 volumes:
   app_db_data:
   stac_db_data:
