@@ -1,0 +1,43 @@
+version: '3.9'
+
+services:
+  app-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-thunder}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-thunder_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-thunder_app}
+    ports:
+      - "5432:5432"
+    volumes:
+      - app_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-thunder} -d ${POSTGRES_DB:-thunder_app}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  stac-db:
+    image: ghcr.io/stac-utils/pgstac:latest
+    environment:
+      POSTGRES_USER: ${PGSTAC_USER:-pgstac}
+      POSTGRES_PASSWORD: ${PGSTAC_PASSWORD:-pgstac_secret}
+      POSTGRES_DB: ${PGSTAC_DB:-postgis}
+    ports:
+      - "5433:5432"
+    volumes:
+      - stac_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGSTAC_USER:-pgstac} -d ${PGSTAC_DB:-postgis}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  app_db_data:
+  stac_db_data:
