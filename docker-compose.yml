@@ -81,6 +81,27 @@ services:
       stac-db:
         condition: service_healthy
 
+  worker:
+    build:
+      context: ./services/worker
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-thunder}:${POSTGRES_PASSWORD:-thunder_secret}@app-db:5432/${POSTGRES_DB:-thunder_app}
+      - POSTGRES_USER=${PGSTAC_USER:-pgstac}
+      - POSTGRES_PASS=${PGSTAC_PASSWORD:-pgstac_secret}
+      - POSTGRES_DBNAME=${PGSTAC_DB:-postgis}
+      - POSTGRES_HOST_READER=stac-db
+      - POSTGRES_HOST_WRITER=stac-db
+      - POSTGRES_PORT=5432
+    depends_on:
+      redis:
+        condition: service_started
+      app-db:
+        condition: service_healthy
+      stac-db:
+        condition: service_healthy
+
 volumes:
   app_db_data:
   stac_db_data:
