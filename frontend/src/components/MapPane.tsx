@@ -19,8 +19,8 @@ export const MapPane: React.FC = () => {
     longitude: 13.4050, latitude: 52.5200, zoom: 12, pitch: 0, bearing: 0
   });
 
-  // Default item setup for testing
-  const SAMPLE_ID = 'S2B_32UQD_20260415_0_L2A';
+  // Default item setup for testing (Berlin)
+  const SAMPLE_ID = 'S2B_33UUT_20260415_0_L2A';
   useEffect(() => { setActiveItem(SAMPLE_ID); }, [setActiveItem]);
 
   const activeDRA = useMemo(() => {
