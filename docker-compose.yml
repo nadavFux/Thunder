@@ -20,7 +20,7 @@ services:
   stac-db:
     image: ghcr.io/stac-utils/pgstac:latest
     environment:
-      POSTGRES_USER: ${PGSTAC_USER:-pgstac}
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${PGSTAC_PASSWORD:-pgstac_secret}
       POSTGRES_DB: ${PGSTAC_DB:-postgis}
     ports:
@@ -28,7 +28,7 @@ services:
     volumes:
       - stac_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PGSTAC_USER:-pgstac} -d ${PGSTAC_DB:-postgis}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${PGSTAC_DB:-postgis}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -43,6 +43,8 @@ services:
       context: ./services/app-api
     ports:
       - "8000:8000"
+    volumes:
+      - ./services/app-api:/app
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-thunder}:${POSTGRES_PASSWORD:-thunder_secret}@app-db:5432/${POSTGRES_DB:-thunder_app}
     depends_on:
@@ -54,8 +56,16 @@ services:
       context: ./services/stac-api
     ports:
       - "8081:8081"
+    volumes:
+      - ./services/stac-api:/app
     environment:
-      - POSTGRES_USER=${PGSTAC_USER:-pgstac}
+      - PGUSER=postgres
+      - PGPASSWORD=${PGSTAC_PASSWORD:-pgstac_secret}
+      - PGDATABASE=${PGSTAC_DB:-postgis}
+      - PGHOST=stac-db
+      - PGPORT=5432
+      # Some versions still use these:
+      - POSTGRES_USER=postgres
       - POSTGRES_PASS=${PGSTAC_PASSWORD:-pgstac_secret}
       - POSTGRES_DBNAME=${PGSTAC_DB:-postgis}
       - POSTGRES_HOST_READER=stac-db
@@ -70,8 +80,16 @@ services:
       context: ./services/tiler-api
     ports:
       - "8082:8082"
+    volumes:
+      - ./services/tiler-api:/app
     environment:
-      - POSTGRES_USER=${PGSTAC_USER:-pgstac}
+      - PGUSER=postgres
+      - PGPASSWORD=${PGSTAC_PASSWORD:-pgstac_secret}
+      - PGDATABASE=${PGSTAC_DB:-postgis}
+      - PGHOST=stac-db
+      - PGPORT=5432
+      # Some versions still use these:
+      - POSTGRES_USER=postgres
       - POSTGRES_PASS=${PGSTAC_PASSWORD:-pgstac_secret}
       - POSTGRES_DBNAME=${PGSTAC_DB:-postgis}
       - POSTGRES_HOST_READER=stac-db
@@ -84,11 +102,19 @@ services:
   worker:
     build:
       context: ./services/worker
+    volumes:
+      - ./services/worker:/app
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - DATABASE_URL=postgresql://${POSTGRES_USER:-thunder}:${POSTGRES_PASSWORD:-thunder_secret}@app-db:5432/${POSTGRES_DB:-thunder_app}
-      - POSTGRES_USER=${PGSTAC_USER:-pgstac}
+      - PGUSER=postgres
+      - PGPASSWORD=${PGSTAC_PASSWORD:-pgstac_secret}
+      - PGDATABASE=${PGSTAC_DB:-postgis}
+      - PGHOST=stac-db
+      - PGPORT=5432
+      # Some versions still use these:
+      - POSTGRES_USER=postgres
       - POSTGRES_PASS=${PGSTAC_PASSWORD:-pgstac_secret}
       - POSTGRES_DBNAME=${PGSTAC_DB:-postgis}
       - POSTGRES_HOST_READER=stac-db
