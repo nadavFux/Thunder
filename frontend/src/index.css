@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.mosaic-window-toolbar {
+  background: theme('colors.workbench.toolbar') !important;
+  box-shadow: none !important;
+  border-bottom: 1px solid theme('colors.workbench.border') !important;
+  height: 30px !important;
+}
+
+.mosaic-window-title {
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  color: #888 !important;
+  padding-left: 12px !important;
+}
+
+.mosaic-window-body {
+  background: theme('colors.workbench.body') !important;
+}
+
+.mosaic-tile {
+  margin: 2px !important;
+}
+
+.mosaic-root {
+  background: theme('colors.workbench.toolbar') !important;
+  top: 2px !important;
+  bottom: 2px !important;
+  left: 2px !important;
+  right: 2px !important;
+}
+
+.mosaic-split {
+  background: transparent !important;
+  width: 4px !important;
+}
+
+.mosaic-split:hover {
+  background: theme('colors.workbench.accent') !important;
+}
