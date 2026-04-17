@@ -47,19 +47,17 @@ class DRABitmapLayer extends BitmapLayer<DRABitmapLayerProps> {
     };
   }
 
-  updateState(params: UpdateParameters<this>) {
-    super.updateState(params);
-    const { props, changeFlags } = params;
-
-    if (changeFlags.propsChanged && this.state.model) {
-      const { contrast = 1.0, brightness = 0.0, gamma = 1.0 } = props;
-      
-      (this.state.model as any).setUniforms({
-        contrast,
-        brightness,
-        invGamma: 1.0 / Math.max(0.01, gamma)
-      });
-    }
+  draw(opts: any) {
+    const { contrast = 1.0, brightness = 0.0, gamma = 1.0 } = this.props;
+    
+    opts.uniforms = {
+      ...opts.uniforms,
+      contrast,
+      brightness,
+      invGamma: 1.0 / Math.max(0.01, gamma)
+    };
+    
+    super.draw(opts);
   }
 }
 

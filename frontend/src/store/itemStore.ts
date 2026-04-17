@@ -5,13 +5,13 @@ import { DRAConfig, STACItem } from '../api/types';
 
 interface ItemState {
   activeItemId: string | null;
-  items: Record<string, STACItem>;
+  items: Record<string, Partial<STACItem> & { id: string; collection: string; asset?: string }>;
   draSettings: Record<string, DRAConfig>;
 }
 
 interface ItemActions {
   setActiveItem: (id: string) => void;
-  setItems: (items: STACItem[]) => void;
+  setItems: (items: (Partial<STACItem> & { id: string; collection: string; asset?: string })[]) => void;
   updateDRA: (id: string, settings: Partial<DRAConfig>) => void;
   resetDRA: (id: string) => void;
 }

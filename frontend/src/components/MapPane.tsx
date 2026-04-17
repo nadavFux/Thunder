@@ -3,6 +3,8 @@ import MapGL from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import DeckGL from '@deck.gl/react';
 import { MapViewState } from '@deck.gl/core';
+import { TileLayer } from '@deck.gl/geo-layers';
+import { BitmapLayer } from '@deck.gl/layers';
 import { HybridSatelliteLayer } from '../layers/HybridSatelliteLayer';
 import { useItemStore } from '../store/itemStore';
 import { useLayoutStore } from '../store/layoutStore';
@@ -13,14 +15,14 @@ export const MapPane: React.FC = () => {
   const map = useRef<MapGL.Map | null>(null);
   
   const { isAnalysisMode, toggleAnalysisMode } = useLayoutStore();
-  const { activeItemId, draSettings, updateDRA, resetDRA, setActiveItem } = useItemStore();
+  const { activeItemId, items, draSettings, updateDRA, resetDRA, setActiveItem } = useItemStore();
 
   const [viewState, setViewState] = useState<MapViewState>({
     longitude: 13.4050, latitude: 52.5200, zoom: 12, pitch: 0, bearing: 0
   });
 
   // Default item setup for testing (Berlin)
-  const SAMPLE_ID = 'S2B_33UUT_20260415_0_L2A';
+  const SAMPLE_ID = 'S2B_33UUU_20260415_0_L2A';
   useEffect(() => { setActiveItem(SAMPLE_ID); }, [setActiveItem]);
 
   const activeDRA = useMemo(() => {
@@ -53,28 +55,51 @@ export const MapPane: React.FC = () => {
   }, [viewState.zoom, isAnalysisMode]);
 
   const layers = useMemo(() => {
-    if (!activeItemId) return [];
-
-    return [
-      new HybridSatelliteLayer({
-        id: `hybrid-satellite-${activeItemId}`,
-        collection: 'sentinel-2-l2a',
-        itemId: activeItemId,
-        isLossless,
-        // Request standard WebP for discovery, or Lossless WebP for analysis
-        data: [`http://localhost:8082/collections/sentinel-2-l2a/items/${activeItemId}/WebMercatorQuad/tiles/{z}/{x}/{y}@1x?assets=visual&lossless=${isLossless}`],
-        contrast: activeDRA.contrast,
-        brightness: activeDRA.brightness,
-        gamma: activeDRA.gamma,
-        updateTriggers: {
-          // Re-fetch data only when lossless mode toggles
-          data: [isLossless],
-          // Sub-layers need to update uniforms when DRA params change
-          renderSubLayers: [activeDRA.contrast, activeDRA.brightness, activeDRA.gamma]
+    const layerStack: any[] = [
+      // Base World Layer (Carto Dark Matter)
+      new TileLayer({
+        id: 'base-world-layer',
+        data: 'https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png',
+        minZoom: 0,
+        maxZoom: 20,
+        tileSize: 256,
+        renderSubLayers: (props: any) => {
+          const { bbox: { west, south, east, north } } = props.tile;
+          return new BitmapLayer(props, {
+            data: undefined,
+            image: props.data,
+            bounds: [west, south, east, north]
+          });
         }
       })
     ];
-  }, [activeItemId, isLossless, activeDRA]);
+
+    if (activeItemId && items[activeItemId]) {
+      const item = items[activeItemId];
+      const asset = item.asset || 'visual';
+      const collection = item.collection;
+
+      layerStack.push(
+        new HybridSatelliteLayer({
+          id: `hybrid-satellite-${activeItemId}`,
+          collection,
+          itemId: activeItemId,
+          isLossless,
+          // Request dynamic assets and format
+          data: [`http://localhost:8082/collections/${collection}/items/${activeItemId}/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?assets=${asset}&format=webp&lossless=${isLossless}`],
+          contrast: activeDRA.contrast,
+          brightness: activeDRA.brightness,
+          gamma: activeDRA.gamma,
+          updateTriggers: {
+            data: [isLossless],
+            renderSubLayers: [activeDRA.contrast, activeDRA.brightness, activeDRA.gamma]
+          }
+        })
+      );
+    }
+
+    return layerStack;
+  }, [activeItemId, items, isLossless, activeDRA]);
 
   return (
     <div className="w-full h-full relative bg-black">
